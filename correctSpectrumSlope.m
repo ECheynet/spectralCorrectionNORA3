@@ -1,22 +1,66 @@
 function signal_corr = correctSpectrumSlope(signal, fs, fmin,fmax)
-%FILTER_SLOPE_5_3_THRESHOLD Filters a time series to enforce a -5/3 spectral slope 
-% above a specific frequency threshold, while preserving the low-frequency range and phase.
+% correctSpectrumSlope  Adjust PSD slope within a specified frequency band.
+%   signal_corr = correctSpectrumSlope(signal, fs, fmin, fmax) modifies the
+%   amplitude spectrum of a uniformly sampled time series so that its power
+%   spectral density (PSD) follows a −5/3 power law between the given lower
+%   and upper frequency limits (Hz). Phases are preserved, the low-frequency
+%   range below fmin is unchanged, and the correction tapers out smoothly
+%   above fmax to avoid artifacts.
 %
-%   filtered_signal = FILTER_SLOPE_5_3_THRESHOLD(signal, fs, freq_thresh)
+%   This is intended for mesoscale wind speed time series (hourly resolution)
+%   to compensate for model underestimation of variance and extremes by
+%   restoring the expected slope in a selected frequency band. The method is
+%   inspired by Bastine et al. (2018) and is a home-made implementation of 
+%   the method.
 %
-%   Inputs:
-%       - signal: Original time series (vector)
-%       - fs: Sampling frequency (scalar)
-%       - freq_thresh: Frequency threshold above which the -5/3 slope is applied (Hz)
+%   Inputs
+%   ------
+%   signal : [N×1] or [1×N] double/single
+%       Time series (uniform sampling, NaNs already handled).
+%   fs     : scalar double
+%       Sampling frequency in Hz.
+%   fmin   : scalar double
+%       Lower bound of frequency band to be slope-corrected (Hz).
+%   fmax   : scalar double
+%       Upper bound of frequency band to be slope-corrected (Hz).
 %
-%   Outputs:
-%       - filtered_signal: Time series filtered to have a -5/3 spectral slope above freq_thresh
+%   Output
+%   ------
+%   signal_corr : same size and class as signal
+%       Corrected time series with PSD ~ f^(−5/3) on [fmin, fmax].
 %
-%   Example:
-%       fs = 1.0; % Sampling frequency
-%       signal = randn(1, 1024); % White noise
-%       freq_thresh = 0.1; % Threshold frequency in Hz
-%       filtered_signal = correctSpectrumSlope(signal, fs, freq_thresh);
+%   Method (overview)
+%   -----------------
+%   1) FFT of the input signal.
+%   2) Estimate current spectral slope on [fmin,fmax] via log–log fit.
+%   3) Build a gain function to adjust that slope to −5/3 over the band,
+%      with smooth tapers at fmin and fmax.
+%   4) Apply the gain to the amplitude spectrum (phase preserved) and
+%      inverse FFT to obtain the corrected series.
+%
+%   Notes
+%   -----
+%   • The function assumes evenly spaced samples with fs > 0.
+%   • 0 < fmin < fmax < fs/2 must hold.
+%   • Detrend before calling if needed to avoid bias at low frequencies.
+%
+%   Example
+%   -------
+%   % Synthetic hourly series (10 years)
+%   fs = 1/3600;                           % Hz (hourly data)
+%   t  = (0:(10*365*24-1))'/fs;            % time vector in seconds
+%   x  = randn(size(t));                   % synthetic signal
+%   fmin = 1/(12*3600); fmax = 1/(6*3600); % 12 h to 6 h band
+%   xcorr = correctSpectrumSlope(x, fs, fmin, fmax);
+%
+%   Reference
+%   ---------
+%   Bastine, D., Larsén, X., Witha, B., Dörenkämper, M., & Gottschall, J. (2018).
+%   Extreme winds in the new European wind atlas. J. Phys.: Conf. Ser., 1102, 012006.
+%
+%  See also: PWELCH, DETREND, INPAINT_NANS, BINAVERAGING
+%
+% Author: E. Cheynet - UiB -  last modified: 08/08/2025
 
     % Ensure signal is a row vector
     if iscolumn(signal)
