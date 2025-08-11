@@ -14,7 +14,8 @@ The Live Script `Documentation.mlx` demonstrates how to:
 6. Visualise time series and PSD comparisons.  
 
 The method is based on the approach described in:  
-Malekmohammadi, Shokoufeh, Etienne Cheynet, and Joachim Reuder. "Observation of Kelvin–Helmholtz billows in the marine atmospheric boundary layer by a ship-borne Doppler wind lidar." Scientific Reports 15.1 (2025): 5245.
+
+Malekmohammadi, Shokoufeh, Etienne Cheynet, and Joachim Reuder. _Observation of Kelvin–Helmholtz billows in the marine atmospheric boundary layer by a ship-borne Doppler wind lidar_ *Scientific Reports* 15.1 (2025): 5245.
 
 Bastine, D., Larsén, X., Witha, B., Dörenkämper, M., & Gottschall, J. (2018). Extreme winds in the new European wind atlas. *Journal of Physics: Conference Series*, 1102, 012006.  
 
